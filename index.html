@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ACE AI LAB</title>
+  <meta name="description" content="ACE AI Lab — Signal detected. Curiosity confirmed." />
+  <style>
+    :root{
+      --bg:#06111f; --bg2:#0a1830; --line:rgba(88,190,255,.28);
+      --glow:#49c7ff; --glow2:#8d6bff; --text:#eaf6ff; --muted:#9fb8c9;
+      --success:#7df0b8; --danger:#ff9a9a;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(73,199,255,.12), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(141,107,255,.12), transparent 24%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
+      overflow-x:hidden;
+    }
+    .grid{
+      position:fixed; inset:0; pointer-events:none; opacity:.14;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size:36px 36px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 85%);
+      -webkit-mask-image: radial-gradient(circle at center, black 45%, transparent 85%);
+    }
+    .scan{
+      position:fixed; inset:0; pointer-events:none; opacity:.05;
+      background: repeating-linear-gradient(to bottom, rgba(255,255,255,.8) 0px, rgba(255,255,255,.8) 1px, transparent 2px, transparent 4px);
+    }
+    .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px;}
+    .panel{
+      width:min(100%, 760px); border:1px solid var(--line); border-radius:22px; padding:24px;
+      background:linear-gradient(180deg, rgba(8,18,35,.86), rgba(8,18,35,.72));
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 0 0 40px rgba(73,199,255,.08), 0 0 100px rgba(141,107,255,.05);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); position:relative; overflow:hidden;
+    }
+    .panel:before{
+      content:""; position:absolute; inset:auto -20% 100% -20%; height:160px;
+      background:radial-gradient(circle, rgba(73,199,255,.18), transparent 60%);
+      filter:blur(12px); animation:drift 8s ease-in-out infinite alternate;
+    }
+    @keyframes drift{from{transform:translateY(0) translateX(-2%)} to{transform:translateY(18px) translateX(2%)}}
+    .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:28px; color:var(--muted); font-size:12px; letter-spacing:.14em; text-transform:uppercase;}
+    .brand{display:flex; align-items:center; gap:12px}
+    .a-mark{
+      width:34px; height:34px; border-radius:12px; position:relative; border:1px solid rgba(73,199,255,.35);
+      box-shadow:0 0 24px rgba(73,199,255,.12), inset 0 0 22px rgba(73,199,255,.06);
+      display:grid; place-items:center; flex:0 0 auto;
+    }
+    .a-mark svg{width:21px; height:21px}
+    h1{margin:0 0 14px 0; font-weight:700; font-size:clamp(28px,5vw,44px); letter-spacing:.04em;}
+    .status{color:var(--muted); font-size:14px; line-height:1.6; margin-bottom:22px;}
+    .status .pulse{color:var(--success)}
+    .question-label{color:var(--glow); text-transform:uppercase; letter-spacing:.18em; font-size:12px; margin-bottom:10px;}
+    .question{font-size:clamp(20px,3.8vw,31px); line-height:1.25; margin:0 0 20px 0; max-width:14ch;}
+    .field{
+      width:100%; display:block; border:1px solid rgba(73,199,255,.25); background:rgba(5,13,24,.72);
+      color:var(--text); border-radius:16px; padding:16px 18px; outline:none; font-size:16px;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .field:focus{border-color:rgba(73,199,255,.6); box-shadow:0 0 0 3px rgba(73,199,255,.12), inset 0 0 0 1px rgba(255,255,255,.02);}
+    .row{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap;}
+    .btn{
+      appearance:none; border:none; cursor:pointer; border-radius:14px; padding:14px 18px;
+      font-size:15px; font-weight:600; letter-spacing:.02em; transition:.18s ease;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg, rgba(73,199,255,.18), rgba(141,107,255,.16));
+      color:var(--text); border:1px solid rgba(73,199,255,.34); box-shadow:0 0 28px rgba(73,199,255,.08);
+    }
+    .btn-primary:hover{transform:translateY(-1px); box-shadow:0 4px 30px rgba(73,199,255,.14)}
+    .btn-secondary{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,.1);}
+    .fine{margin-top:14px; color:var(--muted); font-size:13px;}
+    .small{margin-top:22px; display:flex; gap:14px; flex-wrap:wrap; color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase;}
+    .chip{padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03);}
+    .hidden{display:none !important}
+    .success-panel{border-top:1px solid rgba(125,240,184,.18); margin-top:22px; padding-top:22px;}
+    .success-title{font-size:24px; margin:0 0 8px 0;}
+    .micro{font-size:12px; color:var(--muted); margin-top:8px;}
+    .footer{margin-top:26px; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    @media (max-width:640px){
+      .panel{padding:18px} .top{margin-bottom:18px} .question{max-width:none} .row{flex-direction:column} .btn{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="scan"></div>
+  <div class="wrap">
+    <main class="panel">
+      <div class="top">
+        <div class="brand">
+          <div class="a-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M13 51L32 12L51 51" stroke="url(#g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 34H42" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="32" cy="12" r="3" fill="#49c7ff"/>
+              <defs>
+                <linearGradient id="g" x1="13" y1="12" x2="51" y2="51" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#49c7ff"/>
+                  <stop offset="1" stop-color="#8d6bff"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div>ACE AI LAB</div>
+        </div>
+        <div>Early Access</div>
+      </div>
+
+      <section id="step1">
+        <h1>Signal detected.</h1>
+        <div class="status"><span class="pulse">Curiosity confirmed.</span></div>
+        <div class="question-label">Signal Question</div>
+        <p class="question">If AI could help you create anything, what would you build first?</p>
+
+        <input id="idea" class="field" type="text" placeholder="Type your idea…" />
+
+        <div class="row">
+          <button class="btn btn-primary" id="transmitBtn">Transmit Signal</button>
+          <button class="btn btn-secondary" id="sampleBtn" type="button">Use sample idea</button>
+        </div>
+
+        <div class="fine">Selected signals receive early access.</div>
+
+        <div class="small">
+          <div class="chip">Signals</div>
+          <div class="chip">Missions</div>
+          <div class="chip">Creation Archive</div>
+          <div class="chip">Control Room</div>
+        </div>
+      </section>
+
+      <section id="step2" class="success-panel hidden">
+        <h2 class="success-title">Signal received.</h2>
+        <div class="status">
+          Welcome, Operative.<br/>
+          Early access invitations will be transmitted soon.
+        </div>
+
+        <input id="email" class="field" type="email" placeholder="Enter your email to receive Signals" />
+
+        <div class="row">
+          <button class="btn btn-primary" id="accessBtn">Initialize Access</button>
+          <button class="btn btn-secondary" id="resetBtn" type="button">Start over</button>
+        </div>
+
+        <div class="micro" id="savedIdea"></div>
+        <div class="micro">Tip: to collect submissions later, connect this page to a form service or email list.</div>
+      </section>
+
+      <div class="footer">
+        <div>Enter the World of Artificial Intelligence</div>
+        <div>Learn • Think • Build with AI</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const idea = document.getElementById('idea');
+    const email = document.getElementById('email');
+    const transmitBtn = document.getElementById('transmitBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const accessBtn = document.getElementById('accessBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const savedIdea = document.getElementById('savedIdea');
+
+    sampleBtn.addEventListener('click', () => {
+      idea.value = "A creative lab where people can turn ideas into real worlds, tools, and experiences.";
+      idea.focus();
+    });
+
+    transmitBtn.addEventListener('click', () => {
+      const value = idea.value.trim();
+      if (!value) {
+        idea.focus();
+        idea.style.borderColor = "rgba(255,154,154,.7)";
+        setTimeout(()=> idea.style.borderColor = "rgba(73,199,255,.25)", 1100);
+        return;
+      }
+      savedIdea.textContent = "Signal logged: " + value;
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      email.focus();
+      try { localStorage.setItem('ace_signal_idea', value); } catch(e) {}
+    });
+
+    accessBtn.addEventListener('click', () => {
+      const val = email.value.trim();
+      if (!val) {
+        email.focus();
+        email.style.borderColor = "rgba(255,154,154,.7)";
+        setTimeout(()=> email.style.borderColor = "rgba(73,199,255,.25)", 1100);
+        return;
+      }
+      alert("Access initialized.\n\nFor a live version, connect this page to a form service or email list.");
+    });
+
+    resetBtn.addEventListener('click', () => {
+      step2.classList.add('hidden');
+      step1.classList.remove('hidden');
+      idea.focus();
+    });
+
+    try {
+      const prior = localStorage.getItem('ace_signal_idea');
+      if (prior && !idea.value) idea.value = prior;
+    } catch(e) {}
+  </script>
+</body>
+</html>
